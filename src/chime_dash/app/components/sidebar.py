@@ -73,6 +73,21 @@ class Sidebar(Component):
         (key, CallbackInput(component_id=key, component_property="value"))
         for key in _INPUTS if _INPUTS[key]["type"] not in ("header", )
     )
+    # print("Sidebar")
+
+    @staticmethod
+    def try_int(v):
+        try:
+            return int(v)
+        except ValueError:
+            return v
+
+    @staticmethod
+    def parse_hash(url_hash):
+        params = [param.split("=") for param in url_hash[1:].split(";") if "=" in param]
+        params = {p[0]: Sidebar.try_int(p[1]) for p in params}  # this could be done in one step but it gets confusing
+
+        return params
 
     @staticmethod
     def parse_form_parameters(**kwargs) -> Tuple[Parameters, Dict[str, Any]]:
@@ -80,8 +95,12 @@ class Sidebar(Component):
 
         Returns Parameters and as_date argument
         """
+        hash_params = kwargs.get('hash', None)
+        if hash_params:
+            hash_params = Sidebar.parse_hash(hash_params)
+
         pars = Parameters(
-            current_hospitalized=kwargs["current_hospitalized"],
+            current_hospitalized=hash_params.get("current_hospitalized", kwargs["current_hospitalized"]),
             doubling_time=kwargs["doubling_time"],
             known_infected=kwargs["known_infected"],
             market_share=kwargs["market_share"] / 100,
@@ -103,6 +122,8 @@ class Sidebar(Component):
         """Initializes the view
         """
         elements = []
+        print("TEST: ", self.defaults.market_share)
+        # self.defaults.market_share = .01
         for idx, data in _INPUTS.items():
             if data["type"] == "number":
                 element = create_number_input(idx, data, self.content, self.defaults)

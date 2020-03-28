@@ -58,6 +58,11 @@ class Body(Component):
         """
         """
         kwargs = dict(zip(self.callback_inputs, args))
+        print("BODY CALLBACK")
+        print(kwargs)
+        self.defaults.market_share = .11
+        kwargs['market_share'] = .12
+        print(kwargs)
         callback_returns = []
         for component in self.components.values():
             try:

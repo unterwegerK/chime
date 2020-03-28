@@ -12,7 +12,12 @@ class LocationComponent(Component):
     callback_inputs = OrderedDict([('location',
                                     CallbackInput(
                                         component_id='location',
-                                        component_property='pathname'))])
+                                        component_property='pathname')),
+                                   ('hash',
+                                    CallbackInput(
+                                        component_id='location',
+                                        component_property='hash')),
+                                   ])
 
     def get_html(self) -> List[ComponentMeta]:
         return [Location(id='location')]

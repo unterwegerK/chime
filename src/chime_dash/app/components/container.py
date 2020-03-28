@@ -44,7 +44,9 @@ class Container(Component):
         pars = self.components["sidebar"].parse_form_parameters(**kwargs)
         kwargs["model"] = SimSirModel(pars)
         kwargs["pars"] = pars
-
+        print("~~~")
+        print(kwargs['location'])
+        print(kwargs['hash'])
         callback_returns = []
         for component in self.components.values():
             try:

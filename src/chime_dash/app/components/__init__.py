@@ -7,11 +7,14 @@ To add or remove components, adjust the `setup`.
 If callbacks are present, also adjust `CALLBACK_INPUTS`, `CALLBACK_OUTPUTS` and
 `callback_body`.
 """
+import itertools
 from collections import OrderedDict
 
 import dash_html_components as dhc
 from chime_dash.app.components.base import Component, HTMLComponentError
 from dash_bootstrap_components.themes import BOOTSTRAP
+
+from chime_dash.app.components.location import LocationComponent
 from chime_dash.app.components.navbar import Navbar
 from chime_dash.app.components.container import Container
 
@@ -32,6 +35,7 @@ class Body(Component):
         self.components = OrderedDict(
             navbar=Navbar(language, defaults),
             container=Container(language, defaults),
+            location=LocationComponent()
         )
         self.callback_outputs = []
         self.callback_inputs = OrderedDict()
@@ -42,13 +46,18 @@ class Body(Component):
     def get_html(self):
         """Glues individual setup components together
         """
-        return dhc.Div(self.components["navbar"].html + self.components["container"].html)
+        return dhc.Div(
+            list(
+                itertools.chain.from_iterable(
+                    [component.html for component in self.components.values()]
+                )
+            )
+        )
 
     def callback(self, *args, **kwargs):
         """
         """
         kwargs = dict(zip(self.callback_inputs, args))
-
         callback_returns = []
         for component in self.components.values():
             try:

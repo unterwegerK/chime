@@ -14,7 +14,6 @@ import dash_html_components as dhc
 from chime_dash.app.components.base import Component, HTMLComponentError
 from dash_bootstrap_components.themes import BOOTSTRAP
 
-from chime_dash.app.components.location import LocationComponent
 from chime_dash.app.components.navbar import Navbar
 from chime_dash.app.components.container import Container
 
@@ -35,7 +34,6 @@ class Body(Component):
         self.components = OrderedDict(
             navbar=Navbar(language, defaults),
             container=Container(language, defaults),
-            location=LocationComponent()
         )
         self.callback_outputs = []
         self.callback_inputs = OrderedDict()
@@ -58,11 +56,6 @@ class Body(Component):
         """
         """
         kwargs = dict(zip(self.callback_inputs, args))
-        print("BODY CALLBACK")
-        print(kwargs)
-        self.defaults.market_share = .11
-        kwargs['market_share'] = .12
-        print(kwargs)
         callback_returns = []
         for component in self.components.values():
             try:

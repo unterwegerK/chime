@@ -8,8 +8,9 @@ import dash_html_components as dhc
 from typing import List, Dict, Any, Tuple
 from collections import OrderedDict
 
-from dash.dependencies import Input as CallbackInput
+from dash.dependencies import Input as CallbackInput, Output as CallbackOutput
 from dash.development.base_component import ComponentMeta
+from dash_core_components import Location
 
 from penn_chime.defaults import RateLos
 from penn_chime.parameters import Parameters
@@ -70,10 +71,14 @@ class Sidebar(Component):
     localization_file = "sidebar.yml"
 
     callback_inputs = OrderedDict(
-        (key, CallbackInput(component_id=key, component_property="value"))
-        for key in _INPUTS if _INPUTS[key]["type"] not in ("header", )
+        [('hash', CallbackInput('location', 'hash'))] +
+        [(key, CallbackInput(component_id=key, component_property="value"))
+         for key in _INPUTS if _INPUTS[key]["type"] not in ("header", )]
     )
-    # print("Sidebar")
+
+    callback_outputs = [
+        CallbackOutput(component_id="inputs-container", component_property="children")
+    ]
 
     @staticmethod
     def try_int(v):
@@ -82,12 +87,6 @@ class Sidebar(Component):
         except ValueError:
             return v
 
-    @staticmethod
-    def parse_hash(url_hash):
-        params = [param.split("=") for param in url_hash[1:].split(";") if "=" in param]
-        params = {p[0]: Sidebar.try_int(p[1]) for p in params}  # this could be done in one step but it gets confusing
-
-        return params
 
     @staticmethod
     def parse_form_parameters(**kwargs) -> Tuple[Parameters, Dict[str, Any]]:
@@ -95,12 +94,8 @@ class Sidebar(Component):
 
         Returns Parameters and as_date argument
         """
-        hash_params = kwargs.get('hash', None)
-        if hash_params:
-            hash_params = Sidebar.parse_hash(hash_params)
-
         pars = Parameters(
-            current_hospitalized=hash_params.get("current_hospitalized", kwargs["current_hospitalized"]),
+            current_hospitalized=kwargs["current_hospitalized"],
             doubling_time=kwargs["doubling_time"],
             known_infected=kwargs["known_infected"],
             market_share=kwargs["market_share"] / 100,
@@ -118,18 +113,24 @@ class Sidebar(Component):
         )
         return pars
 
-    def get_html(self) -> List[ComponentMeta]:
-        """Initializes the view
-        """
+    @staticmethod
+    def parse_hash(url_hash):
+        params = [param.split("=") for param in url_hash[1:].split(";") if "=" in param]
+        # todo change this over to something like `urlparse.parse_qs`
+        return dict(item.split("=") for item in url_hash[1:].split(";"))
+
+    def build_inputs_helper(self, values={}):
         elements = []
-        print("TEST: ", self.defaults.market_share)
         # self.defaults.market_share = .01
         for idx, data in _INPUTS.items():
-            if data["type"] == "number":
-                element = create_number_input(idx, data, self.content, self.defaults)
-            elif data["type"] == "switch":
-                element = create_switch_input(idx, data, self.content)
-            elif data["type"] == "header":
+            data_dict = data.copy()
+            if idx in values:
+                data_dict['value'] = values[idx]
+            if data_dict["type"] == "number":
+                element = create_number_input(idx, data_dict, self.content, self.defaults)
+            elif data_dict["type"] == "switch":
+                element = create_switch_input(idx, data_dict, self.content)
+            elif data_dict["type"] == "header":
                 element = create_header(idx, self.content)
             else:
                 raise ValueError(
@@ -138,25 +139,43 @@ class Sidebar(Component):
                     )
                 )
             elements.append(element)
+        return elements
 
-        sidebar = dhc.Nav(
-            children=dhc.Div(
-                children=elements,
-                className="p-4",
-                style={
-                    "height": "calc(100vh - 48px)",
-                    "overflowY": "auto",
-                },
-            ),
-            className="col-md-3",
-            style={
-                "position": "fixed",
-                "top": "48px",
-                "bottom": 0,
-                "left": 0,
-                "zIndex": 100,
-                "boxShadow": "inset -1px 0 0 rgba(0, 0, 0, .1)"
-            }
+    def get_html(self) -> List[ComponentMeta]:
+        """Initializes the view
+        """
+        elements = self.build_inputs_helper()
+
+        sidebar = dhc.Div(
+            children=[
+                Location(id='location'),
+                dhc.Nav(
+                    children=dhc.Div(
+                        id="inputs-container",
+                        children=elements,
+                        className="p-4",
+                        style={
+                            "height": "calc(100vh - 48px)",
+                            "overflowY": "auto",
+                        },
+                    ),
+                    className="col-md-3",
+                    style={
+                        "position": "fixed",
+                        "top": "48px",
+                        "bottom": 0,
+                        "left": 0,
+                        "zIndex": 100,
+                        "boxShadow": "inset -1px 0 0 rgba(0, 0, 0, .1)"
+                    }
+                )
+            ]
         )
 
         return [sidebar]
+
+    def callback(self, *args, **kwargs):
+        result = []
+        if "hash" in kwargs:
+            result.append(self.build_inputs_helper(Sidebar.parse_hash(kwargs["hash"])))
+        return result

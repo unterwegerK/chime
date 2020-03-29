@@ -81,12 +81,14 @@ class Sidebar(Component):
     ]
 
     @staticmethod
-    def try_int(v):
+    def try_casting_number(v):
         try:
             return int(v)
         except ValueError:
-            return v
-
+            try:
+                return float(v)
+            except ValueError:
+                return v
 
     @staticmethod
     def parse_form_parameters(**kwargs) -> Tuple[Parameters, Dict[str, Any]]:
@@ -117,11 +119,10 @@ class Sidebar(Component):
     def parse_hash(url_hash):
         params = [param.split("=") for param in url_hash[1:].split(";") if "=" in param]
         # todo change this over to something like `urlparse.parse_qs`
-        return dict(item.split("=") for item in url_hash[1:].split(";"))
+        return {item.split("=")[0]: Sidebar.try_casting_number(item.split("=")[1]) for item in url_hash[1:].split(";") if "=" in item}
 
     def build_inputs_helper(self, values={}):
         elements = []
-        # self.defaults.market_share = .01
         for idx, data in _INPUTS.items():
             data_dict = data.copy()
             if idx in values:

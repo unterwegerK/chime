@@ -8,7 +8,6 @@ const save_params_to_hash = (params, reset=false) => {
     reset: boolean --> whether or not to reset the url hash
     returns: str --> url hash that is created
      */
-
     if( reset ){
         window.location.hash = "";
     }
@@ -127,5 +126,5 @@ const on_load = () => {
     It will grab the hash, update the sidebar, and watch for changes to the hash and update the sidebar.
      */
     hash_to_sidebar();
-    window.onhashchange = hash_to_sidebar;
+    // window.onhashchange = hash_to_sidebar;
 };

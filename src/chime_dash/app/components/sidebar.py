@@ -16,7 +16,7 @@ from penn_chime.defaults import RateLos
 from penn_chime.parameters import Parameters
 
 from chime_dash.app.components.base import Component
-from chime_dash.app.utils.templates import create_switch_input, create_number_input, create_header
+from chime_dash.app.utils.templates import create_switch_input, create_number_input, create_header, create_button
 
 FLOAT_INPUT_MIN = 0.001
 FLOAT_INPUT_STEP = "any"
@@ -68,6 +68,7 @@ _INPUTS = OrderedDict(
     show_tables={"type": "switch", "value": False},
     show_tool_details={"type": "switch", "value": False},
     show_additional_projections={"type": "switch", "value": False},
+    save_parameters={"type": "button", "value": "Save"},
 )
 
 
@@ -136,12 +137,18 @@ class Sidebar(Component):
             data_dict = data.copy()
             if idx in values:
                 data_dict['value'] = values[idx]
+            elif "_" + idx + "-false" in values:
+                # The switch components have an ID like "_as_date-false" instead of "as_date"
+                data_dict['value'] = True if values["_" + idx + "-false"] == "on" else False
+
             if data_dict["type"] == "number":
                 element = create_number_input(idx, data_dict, self.content, self.defaults)
             elif data_dict["type"] == "switch":
                 element = create_switch_input(idx, data_dict, self.content)
             elif data_dict["type"] == "header":
                 element = create_header(idx, self.content)
+            elif data_dict["type"] == "button":
+                element = create_button(idx, self.content)
             else:
                 raise ValueError(
                     "Failed to parse input '{idx}' with data '{data}'".format(

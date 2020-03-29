@@ -90,20 +90,6 @@ const update_sidebar_params = (params) => {
     return null;
 };
 
-
-// Could probably replace this with a jquery-style .ready function
-// Note: commented out for now to make this inactive.
-// let c = 0;
-// let dom_ready = setInterval(function(){
-//     console.log(c++);
-//     if( document.getElementById('n_days') != null) {  // assumes n_ready. todo: add that to tests
-//         clearInterval(dom_ready);
-//         on_load();
-//     } else if( c > 200 ){
-//         clearInterval(dom_ready);  // took over 2 seconds to load the dom... No go.
-//     }
-// }, 10);
-
 const hash_to_sidebar = () => {
     /*
     Shortcut function to grab params from the hash and update the sidebar with them.
@@ -112,19 +98,44 @@ const hash_to_sidebar = () => {
     return null;
 };
 
+const copyToClipboard = () => {
+    const el = document.createElement('textarea');
+    el.value = window.location.href;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+};
+
 const save_to_hash = () => {
     /*
     Shortcut function to gather the params from the sidebar and save them to the hash,
-    resetting the hash in the process.
+    resetting the hash in the process, and confirming saving to clipboard
      */
     save_params_to_hash(gather_params(), true);
+    if( confirm("Do you want to copy the url and your parameters to your clipboard?") ){
+        copyToClipboard();
+    }
 };
+
+// Could probably replace this with a jquery-style .ready function
+let c = 0;
+let dom_ready = setInterval(function(){
+    console.log(c++);
+    if( document.getElementById('n_days') != null) {  // assumes n_ready. todo: add that to tests
+        clearInterval(dom_ready);
+        on_load();
+    } else if( c > 200 ){
+        clearInterval(dom_ready);  // took over 2 seconds to load the dom... No go.
+    }
+}, 10);
 
 const on_load = () => {
     /*
-    This function is triggered by the currently commented out interval above.
+    This function is triggered by the interval above.
     It will grab the hash, update the sidebar, and watch for changes to the hash and update the sidebar.
      */
-    hash_to_sidebar();
+    // hash_to_sidebar(); // trying to do this in python for now
+    document.getElementById("save_parameters").onclick = save_to_hash;
     // window.onhashchange = hash_to_sidebar;
 };

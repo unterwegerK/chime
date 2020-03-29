@@ -11,7 +11,7 @@ from yaml import safe_load
 from numpy import mod
 from pandas import DataFrame
 
-from dash_html_components import Table, Thead, Tbody, Tr, Td, Th, H4
+from dash_html_components import Table, Thead, Tbody, Tr, Td, Th, H4, Button
 from dash_bootstrap_components import FormGroup, Label, Input, Checklist
 
 from penn_chime.defaults import Constants
@@ -116,6 +116,13 @@ def create_header(idx: str, content: Dict[str, str]):
     Create heading element using localization map
     """
     return H4(id=idx, children=content[idx])
+
+
+def create_button(idx: str, content: Dict[str, str]):
+    """
+    Create button element
+    """
+    return Button(id=idx, children=content[idx])
 
 
 def create_switch_input(idx: str, data: Dict[str, Any], content: Dict[str, str]):

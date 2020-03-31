@@ -239,7 +239,7 @@ def seir(
 
 def gen_seir(
     s: float, e: float, i: float, r: float, gamma: float, a: float, i_day: int, *args
-) -> Generator[Tuple[int, float, float, float], None, None]:
+) -> Generator[Tuple[int, float, float, float, float], None, None]:
     """Simulate SIR model forward in time yielding tuples.
     Parameter order has changed to allow multiple (beta, n_days)
     to reflect multiple changing social distancing policies.

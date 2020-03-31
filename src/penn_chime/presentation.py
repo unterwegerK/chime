@@ -270,6 +270,14 @@ def display_sidebar(st, d: Parameters) -> Parameters:
         step=1,
         format="%i",
     )
+    incubation_days_input = NumberInput(
+        st_obj,
+        "Incubation time in days",
+        min_value=0,
+        value=d.incubation_period,
+        step=1,
+        format="%i",
+    )
     max_y_axis_set_input = CheckboxInput(
         st_obj, "Set the Y-axis on graphs to a static value"
     )
@@ -318,6 +326,7 @@ def display_sidebar(st, d: Parameters) -> Parameters:
     icu_rate = icu_pct_input()
     ventilated_rate = ventilated_pct_input()
     infectious_days = infectious_days_input()
+    incubation_period = incubation_days_input()
     hospitalized_days = hospitalized_days_input()
     icu_days = icu_days_input()
     ventilated_days = ventilated_days_input()
@@ -346,6 +355,7 @@ def display_sidebar(st, d: Parameters) -> Parameters:
         date_first_hospitalized=date_first_hospitalized,
         doubling_time=doubling_time,
         infectious_days=infectious_days,
+        incubation_period=incubation_period,
         market_share=market_share,
         max_y_axis=max_y_axis,
         n_days=n_days,

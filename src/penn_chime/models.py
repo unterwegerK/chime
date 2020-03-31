@@ -70,6 +70,8 @@ class SimSirModel:
         self.susceptible = susceptible
         self.infected = infected
         self.recovered = p.recovered
+        self.exposed = 0.0
+        self.a = 1.0 / p.incubation_period
 
         self.beta = beta
         self.gamma = gamma
@@ -153,17 +155,19 @@ class SimSirModel:
             self.beta_t * susceptible - gamma + 1)
         self.doubling_time_t = doubling_time_t
 
-        self.sim_sir_w_date_df = build_sim_sir_w_date_df(self.raw_df, p.current_date)
+        self.sim_sir_w_date_df = build_sim_seir_w_date_df(self.raw_df, p.current_date)
 
         self.daily_growth_rate = get_growth_rate(p.doubling_time)
         self.daily_growth_rate_t = get_growth_rate(self.doubling_time_t)
 
     def run_projection(self, p):
-        self.raw_df = sim_sir_df(
+        self.raw_df = sim_seir_df(
             self.susceptible,
+            self.exposed,
             self.infected,
             p.recovered,
             self.gamma,
+            self.a,
             -self.i_day,
             self.beta,
             self.i_day,
@@ -209,12 +213,13 @@ def get_growth_rate(doubling_time: Optional[float]) -> float:
     return (2.0 ** (1.0 / doubling_time) - 1.0)
 
 
-def sir(
-    s: float, i: float, r: float, beta: float, gamma: float, n: float
+def seir(
+    s: float, e: float, i: float, r: float, beta: float, gamma: float, a: float, n: float
 ) -> Tuple[float, float, float]:
     """The SIR model, one time step."""
     s_n = (-beta * s * i) + s
-    i_n = (beta * s * i - gamma * i) + i
+    e_n = (beta * s * i - a * e) + e
+    i_n = (a * e - gamma * i) + i
     r_n = gamma * i + r
 
     # TODO:
@@ -228,40 +233,40 @@ def sir(
     #    i_n = 0.0
     #if r_n < 0.0:
     #    r_n = 0.0
-    scale = n / (s_n + i_n + r_n)
-    return s_n * scale, i_n * scale, r_n * scale
+    scale = n / (s_n + e_n + i_n + r_n)
+    return s_n * scale, e_n * scale, i_n * scale, r_n * scale
 
 
-def gen_sir(
-    s: float, i: float, r: float, gamma: float, i_day: int, *args
+def gen_seir(
+    s: float, e: float, i: float, r: float, gamma: float, a: float, i_day: int, *args
 ) -> Generator[Tuple[int, float, float, float], None, None]:
     """Simulate SIR model forward in time yielding tuples.
     Parameter order has changed to allow multiple (beta, n_days)
     to reflect multiple changing social distancing policies.
     """
-    s, i, r = (float(v) for v in (s, i, r))
-    n = s + i + r
+    s, e, i, r = (float(v) for v in (s, e, i, r))
+    n = s + e + i + r
     d = i_day
     while args:
         beta, n_days, *args = args
         for _ in range(n_days):
-            yield d, s, i, r
-            s, i, r = sir(s, i, r, beta, gamma, n)
+            yield d, s, e, i, r
+            s, e, i, r = seir(s, e, i, r, beta, gamma, a, n)
             d += 1
-    yield d, s, i, r
+    yield d, s, e, i, r
 
 
-def sim_sir_df(
-    s: float, i: float, r: float, gamma: float, i_day: int, *args
+def sim_seir_df(
+    s: float, e: float, i: float, r: float, gamma: float, a: float, i_day: int, *args
 ) -> pd.DataFrame:
-    """Simulate the SIR model forward in time."""
+    """Simulate the SEIR model forward in time."""
     return pd.DataFrame(
-        data=gen_sir(s, i, r, gamma, i_day, *args),
-        columns=("day", "susceptible", "infected", "recovered"),
+        data=gen_seir(s, e, i, r, gamma, a, i_day, *args),
+        columns=("day", "susceptible", "exposed", "infected", "recovered"),
     )
 
 
-def build_sim_sir_w_date_df(
+def build_sim_seir_w_date_df(
     raw_df: pd.DataFrame,
     current_date: datetime,
 ) -> pd.DataFrame:
@@ -269,6 +274,7 @@ def build_sim_sir_w_date_df(
     return pd.DataFrame({
         "day": day,
         "date": day.astype('timedelta64[D]') + np.datetime64(current_date),
+        "exposed": raw_df.exposed,
         "susceptible": raw_df.susceptible,
         "infected": raw_df.infected,
         "recovered": raw_df.recovered,

@@ -56,6 +56,7 @@ class Parameters:
         current_date: date = date.today(),
         date_first_hospitalized: Optional[date] = None,
         doubling_time: Optional[float] = None,
+        incubation_period: int = 5,
         infectious_days: int = 14,
         market_share: float = 1.0,
         max_y_axis: Optional[int] = None,
@@ -83,6 +84,7 @@ class Parameters:
         self.current_date = current_date
         self.date_first_hospitalized = date_first_hospitalized
         self.doubling_time = doubling_time
+        self.incubation_period = incubation_period
         self.infectious_days = infectious_days
         self.market_share = market_share
         self.max_y_axis = max_y_axis

@@ -274,8 +274,8 @@ def build_sim_seir_w_date_df(
     return pd.DataFrame({
         "day": day,
         "date": day.astype('timedelta64[D]') + np.datetime64(current_date),
-        "exposed": raw_df.exposed,
         "susceptible": raw_df.susceptible,
+        "exposed": raw_df.exposed,
         "infected": raw_df.infected,
         "recovered": raw_df.recovered,
     })

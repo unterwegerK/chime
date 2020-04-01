@@ -78,7 +78,7 @@ class Parameters:
             self.region = None
             self.population = population
         else:
-            raise AssertionError('population or regions must be provided.')
+            raise AssertionError("population or regions must be provided.")
 
         self.current_date = current_date
         self.date_first_hospitalized = date_first_hospitalized
@@ -105,3 +105,13 @@ class Parameters:
             "icu": icu,
             "ventilated": ventilated,
         }
+
+    def __str__(self):
+        data = []
+        for key, val in self.__dict__.items():
+            data.append(
+                "\t{key} ({dtype}): {val}".format(
+                    key=key, val=val, dtype=type(val).__name__
+                )
+            )
+        return "Parameters:\n" + "\n".join(data)

@@ -47,7 +47,7 @@ def save_as_pdf(driver, options=None):
     return cached_file
 
 
-def print_to_pdf(language, kwargs):
+def print_to_pdf(language, **kwargs):
     """Extracts content and prints pdf to buffer object.
     """
     app = Dash(

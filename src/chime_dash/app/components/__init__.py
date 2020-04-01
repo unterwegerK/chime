@@ -12,6 +12,9 @@ from chime_dash.app.components.navbar import Navbar
 from chime_dash.app.pages.index import Index
 from chime_dash.app.pages.sidebar import Sidebar
 
+EXTERNAL_STYLESHEETS = [BOOTSTRAP]
+EXTERNAL_SCRIPTS = []
+
 
 def singleton(class_):
     instances = {}
@@ -29,9 +32,8 @@ class Body(Component):
     """
     """
 
-    external_stylesheets = [
-        BOOTSTRAP,
-    ]
+    external_stylesheets = EXTERNAL_STYLESHEETS
+    external_scripts = EXTERNAL_SCRIPTS
 
     def __init__(self, language, defaults):
         """

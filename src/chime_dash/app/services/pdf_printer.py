@@ -7,13 +7,20 @@ from time import sleep
 
 from io import BytesIO
 
+from json import dumps
+from selenium import webdriver
+
 from dash import Dash
 from dash.testing.application_runners import ThreadedRunner
 from dash.testing.composite import DashComposite
-from dash_bootstrap_components.themes import BOOTSTRAP
-import dash_bootstrap_components as dbc
+from dash_bootstrap_components import Container, Row
+from dash_html_components import Div
 
-from selenium import webdriver
+from chime_dash.app.utils import parameters_deserializer
+from chime_dash.app.pages.index import Index
+from chime_dash.app.pages.sidebar import Sidebar
+from chime_dash.app.components import EXTERNAL_STYLESHEETS, EXTERNAL_SCRIPTS
+from chime_dash.app.utils.callbacks import wrap_callbacks
 
 
 def send_devtools(driver, cmd, params=None):
@@ -40,27 +47,38 @@ def save_as_pdf(driver, options=None):
     return cached_file
 
 
-def print_to_pdf(component, kwargs):
+def print_to_pdf(language, kwargs):
     """Extracts content and prints pdf to buffer object.
     """
     app = Dash(
         __name__,
-        external_stylesheets=[
-            "https://www1.pennmedicine.org/styles/shared/penn-medicine-header.css",
-            BOOTSTRAP,
-        ],
+        external_stylesheets=EXTERNAL_STYLESHEETS,
+        external_scripts=EXTERNAL_SCRIPTS,
     )
 
-    component.components['sidebar'].html[0].hidden = True
+    defaults = parameters_deserializer(Sidebar.update_parameters(**kwargs)[0])
+    sidebar = Sidebar(language, defaults).html[0]
+    index = Index(language, defaults).html[0]
 
-    app.layout = dbc.Container(children=component.html, fluid=True)
+    sidebar.width = 0
+    sidebar.hidden = True
+    index.width = 12
+
+    layout = Div(
+        children=[  # self.components["navbar"].html
+            Container(children=Row([sidebar, index]), fluid=True)
+        ]
+    )
+
+    app.layout = layout
     app.title = "CHIME Printer"
+    # wrap_callbacks(app)
 
-    outputs = component.callback(**kwargs)
-
-    @app.callback(component.callback_outputs, list(component.callback_inputs.values()))
-    def callback(*args):  # pylint: disable=W0612, W0613
-        return outputs
+    # outputs = component.callback(**kwargs)
+    #
+    # @app.callback(component.callback_outputs, list(component.callback_inputs.values()))
+    # def callback(*args):  # pylint: disable=W0612, W0613
+    #     return outputs
 
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--headless")

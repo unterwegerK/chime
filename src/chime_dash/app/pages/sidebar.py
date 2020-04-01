@@ -124,8 +124,9 @@ class Sidebar(Component):
         ]
 
     @staticmethod
-    def get_formated_values(input_values):
+    def get_formated_values(*input_values, **kwargs):
         result = dict(zip(Sidebar.get_ordered_input_keys(), input_values))
+        result.update(kwargs)
         # todo remove this hack needed because of how Checklist type used for switch input returns values
         for key in _INPUTS:
             if _INPUTS[key]["type"] == "switch":
@@ -138,6 +139,14 @@ class Sidebar(Component):
                 result[key] = (
                     datetime.strptime(value, "%Y-%m-%d").date() if value else value
                 )
+            elif _INPUTS[key]["type"] == "number" and isinstance(
+                result.get(key, None), str
+            ):
+                val = result[key]
+                try:
+                    result[key] = float(val) if "." in val else int(val)
+                except ValueError:
+                    pass
         return result
 
     @staticmethod
@@ -146,7 +155,7 @@ class Sidebar(Component):
 
         Returns Parameters
         """
-        inputs_dict = Sidebar.get_formated_values(input_values)
+        inputs_dict = Sidebar.get_formated_values(*input_values, **kwargs)
         dt = inputs_dict["doubling_time"] if inputs_dict["doubling_time"] else None
         dfh = inputs_dict["date_first_hospitalized"] if not dt else None
         pars = Parameters(
@@ -173,11 +182,11 @@ class Sidebar(Component):
     def get_sidebar_query_string(cls, *input_values) -> str:
         """Parses sidebar input values and renders them to a query string (`a=b&c=d`)
         """
-        inputs_dict = cls.get_formated_values(input_values)
+        data = cls.get_formated_values(*input_values)
         query_string = "&".join(
             [
                 "{key}={val}".format(key=key, val=val)
-                for key, val in inputs_dict.items()
+                for key, val in data.items()
                 if not key in ["model", "pars"] and val is not None
             ]
         )

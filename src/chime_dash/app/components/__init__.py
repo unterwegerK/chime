@@ -1,23 +1,30 @@
-"""Combines all components
-
-The `sidebar` component combines all the inputs while other components potentially
-have callbacks.
-
-To add or remove components, adjust the `setup`.
-If callbacks are present, also adjust `CALLBACK_INPUTS`, `CALLBACK_OUTPUTS` and
-`callback_body`.
+"""Builds the root component
 """
 import itertools
 from collections import OrderedDict
 
-import dash_html_components as dhc
-from chime_dash.app.components.base import Component, HTMLComponentError
+from dash_bootstrap_components import Container, Row
 from dash_bootstrap_components.themes import BOOTSTRAP
+from dash_html_components import Div
 
+from chime_dash.app.components.base import Component
 from chime_dash.app.components.navbar import Navbar
-from chime_dash.app.components.container import Container
+from chime_dash.app.pages.index import Index
+from chime_dash.app.pages.sidebar import Sidebar
 
 
+def singleton(class_):
+    instances = {}
+
+    def get_instance(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+
+    return get_instance
+
+
+@singleton
 class Body(Component):
     """
     """
@@ -31,34 +38,30 @@ class Body(Component):
         """
         super().__init__(language, defaults)
         self.components = OrderedDict(
-            navbar=Navbar(language, defaults), container=Container(language, defaults),
+            navbar=Navbar(language, defaults),
+            sidebar=Sidebar(language, defaults),
+            # todo subscribe to changes to URL and select page appropriately
+            index=Index(language, defaults),
         )
-        self.callback_outputs = []
-        self.callback_inputs = OrderedDict()
-        for component in self.components.values():
-            self.callback_outputs += component.callback_outputs
-            self.callback_inputs.update(component.callback_inputs)
 
     def get_html(self):
         """Glues individual setup components together
         """
-        return dhc.Div(
-            list(
-                itertools.chain.from_iterable(
-                    [component.html for component in self.components.values()]
+        return Div(
+            children=self.components["navbar"].html
+            + [
+                Container(
+                    children=Row(
+                        self.components["sidebar"].html
+                        + [
+                            Div(
+                                id="page-wrapper",
+                                children=self.components["index"].html,
+                            )
+                        ]
+                    ),
+                    fluid=True,
+                    className="mt-5",
                 )
-            )
+            ]
         )
-
-    def callback(self, *args, **kwargs):
-        """
-        """
-        kwargs = dict(zip(self.callback_inputs, args))
-        callback_returns = []
-        for component in self.components.values():
-            try:
-                callback_returns += component.callback(**kwargs)
-            except Exception as error:
-                raise HTMLComponentError(component, error)
-
-        return callback_returns

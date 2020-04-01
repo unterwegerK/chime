@@ -57,6 +57,10 @@ def print_to_pdf(language, kwargs):
     )
 
     defaults = parameters_deserializer(Sidebar.update_parameters(**kwargs)[0])
+
+    for key, val in defaults.__dict__.items():
+        print(key, "=", val)
+
     sidebar = Sidebar(language, defaults).html[0]
     index = Index(language, defaults).html[0]
 

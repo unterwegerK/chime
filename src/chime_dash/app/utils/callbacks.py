@@ -18,7 +18,6 @@ class ChimeCallback:
         callback_fn: Callable,
         memoize: bool = True,
     ):
-        pass
         self.inputs = [
             Input(component_id=component_id, component_property=component_property)
             for component_id, component_property in changed_elements.items()

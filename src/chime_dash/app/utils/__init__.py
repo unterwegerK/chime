@@ -39,29 +39,32 @@ def parameters_serializer(p: Parameters):
     return dumps(p, default=_parameters_serializer_helper, sort_keys=True)
 
 
-def parameters_deserializer(p_json: str):
+def parameters_deserializer(p_json: str, **kwargs):
     values = loads(p_json)
+    values.update(kwargs)
     dfh = (
-        parse_date(values["date_first_hospitalized"])
+        parse_date(values["date_first_hospitalized"]).date()
         if values["date_first_hospitalized"]
         else None
     )
     result = Parameters(
-        current_hospitalized=values["current_hospitalized"],
+        current_hospitalized=int(values["current_hospitalized"]),
         hospitalized=Disposition(*values["hospitalized"]),
         icu=Disposition(*values["icu"]),
-        relative_contact_rate=values["relative_contact_rate"],
+        relative_contact_rate=float(values["relative_contact_rate"]),
         ventilated=Disposition(*values["ventilated"]),
-        current_date=parse_date(values["current_date"]),
+        current_date=parse_date(values["current_date"]).date(),
         date_first_hospitalized=dfh,
-        doubling_time=values["doubling_time"],
-        infectious_days=values["infectious_days"],
-        market_share=values["market_share"],
-        max_y_axis=values["max_y_axis"],
-        n_days=values["n_days"],
-        population=values["population"],
-        recovered=values["recovered"],
-        region=values["region"],
+        doubling_time=float(values["doubling_time"]),
+        infectious_days=int(values["infectious_days"]),
+        market_share=float(values["market_share"]),
+        max_y_axis=int(values["max_y_axis"])
+        if values["max_y_axis"] is not None
+        else None,
+        n_days=int(values["n_days"]),
+        population=int(values["population"]),
+        recovered=int(values["recovered"]),
+        region=values["region"] if values["region"] else None,
     )
 
     for key, value in values.items():
@@ -77,6 +80,17 @@ def parameters_deserializer(p_json: str):
             result.__dict__[key] = value
 
     return result
+
+
+def get_new_defaults(defaults: Parameters, **kwargs):
+    """
+    """
+    for key in ["hospitalized", "icu", "ventilated"]:
+        rate = float(kwargs.pop(key + "_rate", getattr(defaults, key).rate))
+        los = int(kwargs.pop(key + "_los", getattr(defaults, key).days))
+        kwargs[key] = [rate, los]
+
+    return parameters_deserializer(parameters_serializer(defaults), **kwargs)
 
 
 def build_csv_download(df):

@@ -170,23 +170,27 @@ class Sidebar(Component):
         return [parameters_serializer(pars)]
 
     @classmethod
+    def get_sidebar_query_string(cls, *input_values) -> str:
+        """Parses sidebar input values and renders them to a query string (`a=b&c=d`)
+        """
+        inputs_dict = cls.get_formated_values(input_values)
+        query_string = "&".join(
+            [
+                "{key}={val}".format(key=key, val=val)
+                for key, val in inputs_dict.items()
+                if not key in ["model", "pars"] and val is not None
+            ]
+        )
+        return query_string
+
+    @classmethod
     def get_download_as_pdf_link(cls, *input_values, **kwargs) -> List[str]:
         """Parses sidebar input values and renders them to a query string for pdf
         download
         """
-        inputs_dict = Sidebar.get_formated_values(input_values)
-        url = (
-            cls.DOWNLOAD_AS_PDF_URL
-            + "?"
-            + "&".join(
-                [
-                    "{key}={val}".format(key=key, val=val)
-                    for key, val in inputs_dict.items()
-                    if not key in ["model", "pars"] and val is not None
-                ]
-            )
-        )
-        return [url]
+        return [
+            cls.DOWNLOAD_AS_PDF_URL + "?" + cls.get_sidebar_query_string(*input_values)
+        ]
 
     def __init__(self, language, defaults):
         changed_elements = OrderedDict(

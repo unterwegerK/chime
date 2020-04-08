@@ -171,6 +171,16 @@ class RootCallbacks(ComponentCallbacks):
         return result
 
     @staticmethod
+    def try_parsing_switch(value):
+        if value == "True":
+            result = True
+        elif value == "False":
+            result = False
+        else:
+            result = None
+        return result
+
+    @staticmethod
     def get_inputs(val_dict, inputs_keys):
         # todo handle versioning of inputs
         return OrderedDict((key, value) for key, value in val_dict.items() if key in inputs_keys)
@@ -184,6 +194,8 @@ class RootCallbacks(ComponentCallbacks):
             value = hash_dict[key]
             if value_type == "number":
                 parsed_value = RootCallbacks.try_parsing_number(value)
+            elif value_type == "switch":
+                parsed_value = RootCallbacks.try_parsing_switch(value)
             else:
                 parsed_value = value
             result[key] = parsed_value
